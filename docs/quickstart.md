@@ -38,6 +38,7 @@ def test_my_dag(dag_bag, run_dag):
     result = run_dag(dag)
 
     assert result.success
+    assert result.xcoms["load"] == 42
     assert result.order == ["extract", "load"]
 ```
 
@@ -47,8 +48,9 @@ pytest --dag-folder=dags
 <!-- --8<-- [end:quickstart] -->
 
 `dag_bag` parses the folder once per worker process. `run_dag` executes the selected Dag under
-its real `dag_id`; `result.order` records execution order, not graph topology. Set
-`airflow_dags_folder` in pytest's ini configuration when `dags/` is your repository default.
+its real `dag_id`; `result.xcoms` captures task return values, and `result.order` records
+execution order, not graph topology. Set `airflow_dags_folder` in pytest's ini configuration
+when `dags/` is your repository default.
 
 ## Author a Dag in the test
 
@@ -79,10 +81,13 @@ def test_dag(dag_maker):
 ```
 
 `run_dag()` and `dag_maker.run()` return the same inert `DagRunResult` snapshot. Outcome
-matchers keep whole-run assertions concise:
+matchers keep whole-run assertions concise. `piab` is a supported alias package shipped in
+the same wheel (the pattern `attrs` uses for `attr`/`attrs`): every public module of
+`pytest_airflow_in_a_box` is importable under the short name and resolves the same objects,
+and `import pytest_airflow_in_a_box as piab` attribute access works too:
 
 ```python
-from pytest_airflow_in_a_box.matchers import succeeded
+from piab.matchers import succeeded
 
 assert result == {"produce": succeeded(21), "consume": succeeded(42)}
 ```
@@ -95,7 +100,7 @@ Airflow skips:
 ```python
 from airflow.sdk import task
 
-from pytest_airflow_in_a_box.matchers import skipped
+from piab.matchers import skipped
 
 
 def test_branch_skips_the_unselected_path(dag_maker):

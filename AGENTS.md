@@ -63,9 +63,9 @@ zero-ini defaults on purpose.
   `make release` / `release.yml` hard-fail on mismatch; `scripts/cut_release.py` is the one
   place that *writes* both, kept in sync by construction. Bump both, plus `CHANGELOG.md`
   (Keep a Changelog + SemVer, link issue/PR numbers)
-- Upstream-derived code must be recorded in `PROVENANCE.md` (currently only
-  `_compat/taskrun.py::run_task_instance`, adapted from Apache Airflow). Never add
-  proprietary source, credentials, hostnames, or internal paths
+- Upstream-derived code must be recorded in `PROVENANCE.md` (e.g.
+  `_compat/taskrun.py::run_task_instance` and `versioninflation.py`, both adapted from
+  Apache Airflow). Never add proprietary source, credentials, hostnames, or internal paths
 
 ## Layout
 
@@ -89,6 +89,12 @@ zero-ini defaults on purpose.
   `run_task`/`render_task`/`task_context`, REST API server + client, `airflow_variables`/`airflow_connections`, `cap_structlog`, `airflow_configure`, `airflow_home`/`airflow_dags_folder`
 - `storage/` -- storage-ladder selection, SQLite tuning, Postgres provisioning
 - `_compat/` -- private Airflow-version shims, each guarded by `capabilities.py` probes
+
+`src/piab/` is the alias mirror package (attrs-style, shipped in the same wheel): one thin
+star-import shim per public module so `from piab.matchers import succeeded` resolves the
+real objects. `tests/test_piab.py` enforces mirror set == public module set, equal
+`__all__`, identical objects -- adding a public module means adding its shim. `_compat/`
+and underscore-prefixed modules get no mirror.
 
 `tests/` mirrors `src/` (`tests/test_<module>.py` plus `bootstrap/`, `compat/`,
 `fixtures/`, `storage/`, `enduser/`). `tests/dags/` is a Dag corpus -- data, not test
